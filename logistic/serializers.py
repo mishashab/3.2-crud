@@ -1,13 +1,20 @@
 from rest_framework import serializers
+from .models import Product, StockProduct
 
 
 class ProductSerializer(serializers.ModelSerializer):
     # настройте сериализатор для продукта
+    class Meta:
+        model = Product
+        fields = ['id', 'title', 'description']
     pass
 
 
 class ProductPositionSerializer(serializers.ModelSerializer):
     # настройте сериализатор для позиции продукта на складе
+    class Meta:
+        model = StockProduct
+        fields = ['id', 'product', 'quantity', 'price']
     pass
 
 
@@ -26,7 +33,13 @@ class StockSerializer(serializers.ModelSerializer):
         # здесь вам надо заполнить связанные таблицы
         # в нашем случае: таблицу StockProduct
         # с помощью списка positions
-
+        for item in positions:
+            StockProduct.objects.create(
+                stock=stock,
+                product=item.get('product'),
+                quantity=item.get('quantity'),
+                price=item.get('price')
+            )
         return stock
 
     def update(self, instance, validated_data):
@@ -39,5 +52,13 @@ class StockSerializer(serializers.ModelSerializer):
         # здесь вам надо обновить связанные таблицы
         # в нашем случае: таблицу StockProduct
         # с помощью списка positions
-
+        for item in positions:
+            product = item.get('product')
+            quantity = item.get('quantity')
+            price = item.get('price')
+            StockProduct.objects.update_or_create(
+                stock=stock,
+                product=product,
+                defaults={'quantity': quantity, 'price': price}
+            )
         return stock
